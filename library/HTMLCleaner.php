@@ -1,5 +1,7 @@
 <?php
 
+include_once 'AttributeCleaner.php';
+
 /**
  * (c) Michael Perk
  *
@@ -15,17 +17,16 @@ class HTMLCleaner
      * @var array
      */
     private $validTags = [
-        'strike' => null,
+        'b' => null,
         'i' => null,
         'u' => null,
-        'strong' => null,
         'div' => null,
         'br' => null,
         'ul' => null,
         'li' => null,
         'ol' => null,
         'span' => [
-            'style' => ['line-height' => 1.42857]
+            'style' => ['line-height' => 1.42857, 'color' => '#fff']
         ]
     ];
 
@@ -125,56 +126,28 @@ class HTMLCleaner
         foreach($element->attributes as $attributeName => $attributeNode) {
 
             $attributeValue = $attributeNode->nodeValue;
+            $newAttributeValue = null;
 
             if(isset($this->validTags[$elementName][$attributeName])){
 
-                if($attributeName == 'style') {
+                $options = $this->validTags[$elementName][$attributeName];
 
-                    $styleAttributes = array();
-
-                    $styleAttributesTemp = explode(';', $attributeValue);
-                    foreach ($styleAttributesTemp as &$styleAttribute){
-                        $styleAttribute = explode(':', $styleAttribute);
-                        $styleAttribute = array_map('trim', $styleAttribute);
-
-                        if(!empty($styleAttribute[0]) && !empty($styleAttribute[1])) {
-
-                            $styleAttributes[$styleAttribute[0]] = $styleAttribute[1];
-                        }
-                    }
-
-                    $newStyleAttributes = array();
-
-                    foreach ($this->validTags[$elementName][$attributeName] as $validStyleAttribute => $validStyleAttributeValue){
-                        if(array_key_exists($validStyleAttribute, $styleAttributes)){
-                            if($styleAttributes[$validStyleAttribute] == $validStyleAttributeValue){
-                                $newStyleAttributes[$validStyleAttribute] = $validStyleAttributeValue;
-                            }
-                        }
-                    }
-
-                    $newAttributeValue = "";
-
-                    if(empty($newStyleAttributes)){
-                        $attributesToRemove[] = $attributeName;
-                        continue;
-                    }
-
-                    foreach ($newStyleAttributes as $currentStyledAttribute => $currentStyledAttributeValue){
-                        $newAttributeValue .= $currentStyledAttribute.":".$currentStyledAttributeValue.";";
-                    }
-
-                    $element->setAttribute($attributeName, $newAttributeValue);
-
-                    continue;
-                }
-
-                if($attributeValue == $this->validTags[$elementName][$attributeName]){
-                    continue;
+                switch($attributeName){
+                    case 'style':
+                        $newAttributeValue = StyleAttributeCleaner::cleanAttribute($elementName, $attributeName, $attributeValue, $options);
+                        break;
+                    default:
+                        $newAttributeValue = DefaultAttributeCleaner::cleanAttribute($elementName, $attributeName, $attributeValue, $options);
+                        break;
                 }
             }
 
-            $attributesToRemove[] = $attributeName;
+            if($newAttributeValue == null) {
+                $attributesToRemove[] = $attributeName;
+                continue;
+            }
+
+            $element->setAttribute($attributeName, $newAttributeValue);
         }
 
         foreach($attributesToRemove as $currentName){
@@ -196,5 +169,4 @@ class HTMLCleaner
 
         return $allowedTags;
     }
-
 }
