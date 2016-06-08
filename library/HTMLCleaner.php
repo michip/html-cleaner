@@ -26,7 +26,7 @@ class HTMLCleaner
         'li' => null,
         'ol' => null,
         'span' => [
-            'style' => ['line-height' => 1.42857, 'color' => '#fff']
+            'style' => ['line-height' => 1.42857]
         ]
     ];
 
@@ -135,6 +135,9 @@ class HTMLCleaner
                 switch($attributeName){
                     case 'style':
                         $newAttributeValue = StyleAttributeCleaner::cleanAttribute($elementName, $attributeName, $attributeValue, $options);
+                        break;
+                    case 'class':
+                        $newAttributeValue = ClassAttributeCleaner::cleanAttribute($elementName, $attributeName, $attributeValue, $options);
                         break;
                     default:
                         $newAttributeValue = DefaultAttributeCleaner::cleanAttribute($elementName, $attributeName, $attributeValue, $options);
