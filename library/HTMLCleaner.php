@@ -43,6 +43,10 @@ class HTMLCleaner
      */
     public function clean($html){
 
+        if(empty($html)){
+            return null;
+        }
+
         $html = $this->removeBannedElements($html);
         $dom = $this->generateDom($html);
 
